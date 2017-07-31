@@ -24,11 +24,11 @@ INTEGER :: flag=2, uniquename=0
 LOGICAL :: squarelead=.FALSE., verbose=.TRUE.
 
 !N=num de sitios horz., P=n. sitios vert. como mostra acima
-INTEGER, PARAMETER :: P=11, N=24, assm=0 !assm should be 0 or 1
+INTEGER, PARAMETER :: P=41, N=20, assm=0 !assm should be 0 or 1
 INTEGER, PARAMETER :: npt=500, namostras=1
 REAL(KIND=8), PARAMETER :: t=-2.7d0,t2=-0.d0, eta=1.d-7, Ef=0.0d0, difpot=0.d0,&
                            eps0=0.0d0, interv=5.d0, fracaot=0.0d0, delta=-0.0d0
-REAL(KIND=8) :: potesq=eps0, potdir=eps0, ee=0.16433d0,&!*ABS(t), &!0.105d0 0.1261
+REAL(KIND=8) :: potesq=eps0, potdir=eps0, ee=0.0d0,&!*ABS(t), &!0.105d0 0.1261
 eini=-2.d0 , efin=2.d0, tb=t*(1.d0+delta)
 
 !++++++++++++++++ SPIN-ORBITA ++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -43,7 +43,7 @@ eini=-2.d0 , efin=2.d0, tb=t*(1.d0+delta)
 ! 'radio' must be zero for no cluster
 ! 'deltau': uncorrelated random onsite disorder in the range [-deltau,deltau]
 ! in all the central region. It must be kept 0.d0 to turn it off.
-INTEGER :: ordered=0, cleanHoriz=1, impborda=0, Nclean=8
+INTEGER :: ordered=0, cleanHoriz=14, impborda=0, Nclean=4
 REAL(KIND=8), PARAMETER :: concentracao=1.d0, radio=0.0d0, deltau=0.0d0*t
 COMPLEX, PARAMETER ::         lambda=(-0.00d0,-0.270d0) *1.0d0
 COMPLEX(KIND=8), PARAMETER :: aatimp=(-0.24d0,-0.000d0) *0.0d1
@@ -66,7 +66,7 @@ REAL(KIND=8), PARAMETER :: fracttimp=0.d0
 
 !++++++++++++++++ CONSTRICOES ++++++++++++++++++++++++++++++++++++++++++++++++++
 ! INTEGER :: cami=N/2, camf=N/2+9, nlin=0!((P-5)*2+1+5)/2
-INTEGER :: cami=(N-12)/2 + 1, camf=N-(N-12)/2, nlin=2!((P-5)*2+1+5)/2
+INTEGER :: cami=(N-12)/2 + 1, camf=N-(N-12)/2, nlin=0!((P-5)*2+1+5)/2
                                    !Deve permanecer 0 se nao quiser constricoes
                                    !Only works for flag=2
 
@@ -76,7 +76,7 @@ INTEGER :: flaglc=3
 !To remove all impureties from left or right layers for a precise total cross-section current computation when SOC is on
 LOGICAL ::  remove_imp_ONleftORright = .FALSE. 
   INTEGER :: lado=1!lado=1->esq, lado=0->dir      
-REAL(KIND=8) :: fator=1.d2, fator2=0.d0
+REAL(KIND=8) :: fator=1.d2, fator2=0.d0, rescale_maior=1.d0
 
 !++++++++++++++++ STM DUAL PROBE +++++++++++++++++++++++++++++++++++++++++++++++
 INTEGER, PARAMETER :: lpB=(P/2+1+5)+(N/2+1), jpB=-(P/2+1+5)+(N/2+1), &

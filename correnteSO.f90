@@ -21,17 +21,14 @@ INTEGER, PARAMETER :: Psring=4*P+2 !N. de sitio num anel
 INTEGER, PARAMETER :: PsrN=Psring*N, PsrHalf=Psring/2
 COMPLEX(KIND=8), PARAMETER :: iimag=(0.d0,1.d0)
 COMPLEX(KIND=8), DIMENSION(PsrHalf,PsrHalf) :: Gamma,g1n,gn1
-INTEGER :: i,j,l,k,l1,j1,s1,l2,j2,s2,u,v,f,e, flaglc2
-! , flaglc=3, & !Se 1, plota apenas setas
-!            lado=1!lado=1->esq, lado=0->dir                     !horiz, Se 3, plota todas
+INTEGER :: i,j,l,k,l1,j1,s1,l2,j2,s2,u,v,f,e, flaglc2, couterspin, lenoftipoimp
 
-! INTEGER :: impureza(namostras,N,2,P+1), impurezaux(N,2,P+1), &
 INTEGER :: impurezaux(N,2,P+1), &
            laRaux, laIaux, timaux, VVaux, rhoaux
-REAL(KIND=8) :: vetor(3,2), vetor2(3,2), base1(2), base2(2), posicao(2), &
-                corinho=0.d0, vtcorr(2)
+REAL(KIND=8) :: vetor(3,2), base1(2), base2(2), posicao(2), &
+                corinho=0.d0, vtcorr(2), splitvec(2)
 REAL(KIND=8) :: centrodebanda(Psring,N), icorr(3), maior, txfour=2.d0*t, corrtotal(N)
-COMPLEX(KIND=8), DIMENSION(PsrN,PsrN):: Gr, Ga, Gn, Gaux, Gama, Gamar, Gamaa, Gaux2
+COMPLEX(KIND=8), DIMENSION(PsrN,PsrN):: Gr, Ga, Gn, Gaux, Gama=0.d0, Gaux2
 CHARACTER(LEN=120) :: nome
 REAL ::  beg_cpu_time, end_cpu_time, timedif
 
@@ -40,10 +37,10 @@ CALL cpu_time (beg_cpu_time)
 flaglc2=2
 IF(flaglc==1) flaglc2=1
 
-i=0
+lenoftipoimp=0
 DO k=1, 80
    IF(tipoimp(k:k).NE." ") THEN
-      i=i+1
+      lenoftipoimp=lenoftipoimp+1
    ELSE
       EXIT
    END IF
@@ -62,7 +59,7 @@ WRITE(nome, FMT="(a,i0,a,i0,a,f4.1,a,i0,a,i0,a,i0,a,i0,a,i0,a,f4.1,a)") &
    "VV" ,  VVaux, "E"  ,     ee, ".dat"
 
 WRITE(nome, FMT="(a,a,a,a)") &
-            "./dados/distcurr", tipoimp(1:i),term,".dat"
+            "./dados/distcurr", tipoimp(1:lenoftipoimp),term,".dat"
 OPEN(UNIT=10, FILE=nome, STATUS="UNKNOWN", ACTION="WRITE")
 
 WRITE(nome, FMT="(a)") &
@@ -80,21 +77,21 @@ IF(remove_imp_ONleftORright) THEN
    END DO
 END IF
 
-CALL green(Gr,Gamma,g1n,gn1,ee,eta,1, 1.d0)
-Ga=CONJG(TRANSPOSE(Gr))
-Gama=0.d0
-Gama(1:PsrHalf,1:PsrHalf)=Gamma
-!Gama(PsrN-PsrHalf+1:PsrN,PsrN-PsrHalf+1:PsrN)=Gamma
+! CALL green(Gr,Gamma,g1n,gn1,ee,eta,1,+1.d0)
+! Ga=CONJG(TRANSPOSE(Gr))
+! Gama=0.d0
+! Gama(1:PsrHalf,1:PsrHalf)=Gamma
+! !Gama(PsrN-PsrHalf+1:PsrN,PsrN-PsrHalf+1:PsrN)=Gamma
 
-Gaux=MATMUL(Gr,Gama)
-Gn=MATMUL(Gaux,Ga)
+! Gaux=MATMUL(Gr,Gama)
+! Gn=MATMUL(Gaux,Ga)
 
-CALL green(Gr,Gamma,g1n,gn1,ee,eta,1,-1.d0)
-Ga=CONJG(TRANSPOSE(Gr))
+! CALL green(Gr,Gamma,g1n,gn1,ee,eta,1,-1.d0)
+! Ga=CONJG(TRANSPOSE(Gr))
 
-Gaux=MATMUL(Gr,Gama)
-Gaux2=MATMUL(Gaux,Ga)
-Gn=Gn+Gaux2
+! Gaux=MATMUL(Gr,Gama)
+! Gaux2=MATMUL(Gaux,Ga)
+! Gn=Gn+Gaux2
 
 vetor(1,:)=(/1.d0,0.d0/)
 vetor(2,:)=(/-0.5d0, SQRT(3.d0)/2.d0/)
@@ -103,11 +100,31 @@ vetor(3,:)=(/-0.5d0,-SQRT(3.d0)/2.d0/)
 base1=vetor(1,:)-vetor(3,:)
 base2=vetor(1,:)-vetor(2,:)
 
+DO couterspin= 1, -1, -2
+! DO couterspin= -1, -1, -2
+
+WRITE(nome, FMT="(a,a,a,i2,a)") &
+         "./dados/distcurr", tipoimp(1:lenoftipoimp),term,couterspin,".dat"
+OPEN(UNIT=10, FILE=nome, STATUS="UNKNOWN", ACTION="WRITE")
+
+CALL green(Gr,Gamma,g1n,gn1,ee,eta,1,dble(couterspin))
+Ga=CONJG(TRANSPOSE(Gr))
+Gama(1:PsrHalf,1:PsrHalf)=Gamma
+
+Gaux=MATMUL(Gr,Gama)
+Gn=MATMUL(Gaux,Ga)
+
+splitvec = (/0.d0,0.15d0/)*couterspin
+
+! vetor(1,:)=(/1.d0,0.d0/)              !+(/0.1d0,0.1d0/)*couterspin
+! vetor(2,:)=(/-0.5d0, SQRT(3.d0)/2.d0/)!+(/0.1d0,0.1d0/)*couterspin
+! vetor(3,:)=(/-0.5d0,-SQRT(3.d0)/2.d0/)!+(/0.1d0,0.1d0/)*couterspin
+
 !Vamos percorrer apenas os sítios pretos, em cada sítio preto, pegamos seus
 !tres vizinhos. Onde houve alteracao nesse codigo devido a nova maneira de
 !os sitos na matriz da funcao de green, assinalei com '!Mudei aqui'
 maior=0.d0
- corrtotal=0.d0
+corrtotal=0.d0
 DO k=1, N
    l1=k
    j1=k
@@ -205,7 +222,7 @@ print *, maior
 DO i=1, N
    print *, corrtotal(i)
 END DO
-maior=maior*1.1d0
+maior=maior*rescale_maior
 
 DO k=1, N
    l1=k
@@ -228,8 +245,8 @@ DO k=1, N
             vtcorr=icorr(j)*vetor(j,:)/maior
             IF( ABS(icorr(j))>=(maior/fator) * fator2 ) THEN
                WRITE(UNIT=10, FMT="(4(f9.5,';'),f9.5)") &
-                                    posicao+vetor(j,:)/2.d0-vtcorr/2.d0, &
-                                    vtcorr, ABS(icorr(j))
+                                    posicao+splitvec+vetor(j,:)/2.d0-vtcorr/2.d0, &
+                                    vtcorr, ABS(icorr(j))*couterspin
             END IF
             IF(nlin==0) THEN
                WRITE(UNIT=11, FMT="(3(f9.5,';'), f9.5)")posicao, vetor(j,:)
@@ -245,8 +262,8 @@ DO k=1, N
                vtcorr=icorr(j)*vetor(j,:)/maior
                IF( ABS(icorr(j))>=(maior/fator) * fator2 ) THEN
                   WRITE(UNIT=10, FMT="(4(f9.5,';'),f9.5)") &
-                                       posicao+vetor(j,:)/2.d0-vtcorr/2.d0, &
-                                       vtcorr,ABS(icorr(j))
+                                       posicao+splitvec+vetor(j,:)/2.d0-vtcorr/2.d0, &
+                                       vtcorr, ABS(icorr(j))*couterspin
                END IF
 
                !To create the constriction
@@ -265,8 +282,8 @@ DO k=1, N
                   vtcorr=icorr(j)*vetor(j,:)/maior
                   IF( ABS(icorr(j))>=(maior/fator) * fator2 ) THEN
                      WRITE(UNIT=10, FMT="(4(f9.5,';'),f9.5)") &
-                                          posicao+vetor(j,:)/2.d0-vtcorr/2.d0, &
-                                          vtcorr,ABS(icorr(j))
+                                          posicao+splitvec+vetor(j,:)/2.d0-vtcorr/2.d0, &
+                                          vtcorr, ABS(icorr(j))*couterspin
                   END IF
                   WRITE(UNIT=11, FMT="(3(f9.5,';'), f9.5)")posicao,vetor(j,:)
                END DO
@@ -305,8 +322,8 @@ DO k=1, N
                   vtcorr=icorr(j)*vetor(j,:)/maior
                   IF( ABS(icorr(j))>=(maior/fator) * fator2 ) THEN
                      WRITE(UNIT=10, FMT="(4(f9.5,';'),f9.5)") &
-                                          posicao+vetor(j,:)/2.d0-vtcorr/2.d0, &
-                                          vtcorr,ABS(icorr(j))
+                                          posicao+splitvec+vetor(j,:)/2.d0-vtcorr/2.d0, &
+                                          vtcorr, ABS(icorr(j))*couterspin
                   END IF
 
                   !To create the constriction
@@ -332,6 +349,8 @@ DO k=1, N
    END DO
 
 END DO
+
+END DO !couterspin
 
 !Plotting the impurities positions
 WRITE(nome, FMT="(a)") &
